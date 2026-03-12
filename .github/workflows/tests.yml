@@ -1,4 +1,4 @@
-name: Tests
+name: PHP Tests
 
 on:
   push:
@@ -25,24 +25,20 @@ jobs:
           php-version: ${{ matrix.php-versions }}
           coverage: none
 
-      # 3. Проверяем, валиден ли composer.json
       - name: Validate composer.json and composer.lock
         run: composer validate --strict
 
-      # 4. Кешируем зависимости для ускорения будущих сборок (опционально, но полезно)
       - name: Cache Composer packages
         id: composer-cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: vendor
           key: ${{ runner.os }}-php-${{ hashFiles('**/composer.lock') }}
           restore-keys: |
             ${{ runner.os }}-php-
 
-      # 5. Устанавливаем зависимости
       - name: Install dependencies
         run: composer install --prefer-dist --no-progress
 
-      # 6. Запускаем сами тесты
       - name: Run test suite
-        run: vendor/bin/phpunit # Или `vendor/bin/pest`, если используете Pest
+        run: vendor/bin/phpunit
