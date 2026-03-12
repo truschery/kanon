@@ -1,0 +1,17 @@
+/vendor/
+
+/.idea/
+/.vscode/
+*.swp
+*.swo
+
+.DS_Store
+Thumbs.db
+
+.phpunit.result.cache
+.pest_cache/
+/coverage/
+/.phpunit.cache/
+phpunit.xml
+
+*.log
