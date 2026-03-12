@@ -1,4 +1,5 @@
-name: tests.yml
+name: Tests
+
 on:
   push:
     branches: [ "main" ]
@@ -6,35 +7,42 @@ on:
     branches: [ "main" ]
 
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
-  steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
 
-    - name: Setup PHP
-      uses: shivammathur/setup-php@v2
-      with:
-        php-version: '8.2'
-        extensions: json, mbstring, dom, curl
-        ini-values: serialize_precision=-1
-        coverage: none
+    strategy:
+      fail-fast: false
+      matrix:
+        php-versions: ['8.1', '8.2', '8.3']
 
-    - name: Get Composer Cache Directory
-      id: composer-cache
-      run: |
-        echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Cache Composer dependencies
-      uses: actions/cache@v3
-      with:
-        path: ${{ steps.composer-cache.outputs.dir }}
-        key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
-        restore-keys: |
-          ${{ runner.os }}-composer-
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php-versions }}
+          coverage: none
 
-    - name: Install dependencies
-      run: composer install --prefer-dist --no-progress --no-suggest
+      # 3. Проверяем, валиден ли composer.json
+      - name: Validate composer.json and composer.lock
+        run: composer validate --strict
 
-    - name: Run test suite
-      run: ./vendor/bin/phpunit
+      # 4. Кешируем зависимости для ускорения будущих сборок (опционально, но полезно)
+      - name: Cache Composer packages
+        id: composer-cache
+        uses: actions/cache@v3
+        with:
+          path: vendor
+          key: ${{ runner.os }}-php-${{ hashFiles('**/composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-php-
+
+      # 5. Устанавливаем зависимости
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-progress
+
+      # 6. Запускаем сами тесты
+      - name: Run test suite
+        run: vendor/bin/phpunit # Или `vendor/bin/pest`, если используете Pest
